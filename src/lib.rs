@@ -31,6 +31,25 @@ pub extern "C" fn destroy_manager(p: *mut Manager) {
 }
 
 /// Create new manager.
+/// * `path` - Data folder path.
+/// * `table_name` - Data table name.
+/// * `data_name` - Data name.
+#[no_mangle]
+pub extern "C" fn make_definition(manager: *mut Manager, tag: u32) -> *mut Definition {
+    unsafe{
+        let s = Box::new((*manager).get_def(&tag).unwrap().clone());
+        Box::into_raw(s)
+    }
+}
+
+/// Destriy manager.
+/// * `p` - Destroyed manager.
+#[no_mangle]
+pub extern "C" fn destroy_definition(p: *mut Definition) {
+    unsafe { Box::from_raw(p) };
+}
+
+/// Create new manager.
 /// * `manager` - Manager pointer.
 /// * `tag` - Definition tag.
 /// * `name` - Definition name.
@@ -50,7 +69,7 @@ pub extern "C" fn add_definition(
 }
 
 /// Destriy manager.
-/// * `p` - Destroyed manager.
+/// * `manager` - Manager pointer.
 #[no_mangle]
 pub extern "C" fn get_def_list(manager: *mut Manager) -> CString {
     let mut tag_list = String::new();
@@ -62,15 +81,39 @@ pub extern "C" fn get_def_list(manager: *mut Manager) -> CString {
     CString::new(tag_list.trim()).unwrap()
 }
 
-/// Destriy manager.
-/// * `manager` - Manager ptr.
+#[no_mangle]
+pub extern "C" fn get_def(definition: *mut Definition) -> FFIDef{
+    unsafe {
+        let def = &(*definition).clone(); 
+        FFIDef::new(def.tag, def.data_type, def.is_multiple)
+    }
+}
+
+/// Get definition name
+/// * `definition` - Definition ptr.
+#[no_mangle]
+pub extern "C" fn get_def_name(definition: *mut Definition) -> CString{
+    CString::new(unsafe { 
+        (*definition).clone().get_name().clone()
+    }).unwrap()
+}
+
+/// Get definition explanation
+/// * `definition` - Definition ptr.
+#[no_mangle]
+pub extern "C" fn get_def_exp(definition: *mut Definition) -> CString{
+    CString::new(unsafe { 
+        (*definition).clone().get_explanation().clone()
+    }).unwrap()
+}
+
+/// Set definition name
+/// * `definition` - Definition ptr.
 /// * `tag` - Definition tag.
 #[no_mangle]
-pub extern "C" fn get_def(manager: *mut Manager, tag: u32) -> FFIDef{
-    unsafe { 
-        match (*manager).get_def(&tag) {
-            Ok(def) => FFIDef::new(def.tag, def.data_type, def.is_multiple), 
-            Err(_) =>  FFIDef::new(0x0000_0000, Type::Int, false)
-        }
+pub extern "C" fn set_def_exp(definition: *mut Definition, exp: *const c_char) {
+    unsafe {
+        let exp: String = CStr::from_ptr(exp).to_str().unwrap().to_string();
+        (*definition).set_explanation(exp)
     }
 }
