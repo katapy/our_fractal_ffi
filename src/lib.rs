@@ -117,3 +117,50 @@ pub extern "C" fn set_def_exp(definition: *mut Definition, exp: *const c_char) {
         (*definition).set_explanation(exp)
     }
 }
+
+/// Get definition children
+/// * `definition` - Definition ptr.
+#[no_mangle]
+pub extern "C" fn add_def_children(definition: *mut Definition, tag: u32) {
+    unsafe {
+        (*definition).children.push(tag);
+    };
+}
+
+/// Get definition children
+/// * `definition` - Definition ptr.
+#[no_mangle]
+pub extern "C" fn get_def_children(definition: *mut Definition) -> CString{
+    let mut tag_list = String::new();
+    unsafe {
+        for i in (*definition).clone().children.clone() {
+            tag_list += format!("{:>08x} ", i).as_str();
+        }
+    };
+    CString::new(tag_list.trim()).unwrap()
+}
+
+
+/// Write definition on file.
+/// * `definition` - Manager ptr.
+#[no_mangle]
+pub extern "C" fn write_def(manager: *mut Manager) -> bool {
+    unsafe {
+        match (*manager).write_def() {
+            Ok(_) => true,
+            Err(_) => false
+        }
+    }
+}
+
+/// Read definition data from file.
+/// * `definition` - Manager ptr.
+#[no_mangle]
+pub extern "C" fn read_def(manager: *mut Manager) -> bool {
+    unsafe {
+        match (*manager).read_def_from_file() {
+            Ok(_) => true,
+            Err(_) => false
+        }
+    }
+}
